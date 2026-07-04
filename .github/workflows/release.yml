@@ -32,6 +32,11 @@ jobs:
     name: Test gate
     runs-on: ubuntu-latest
     container: swift:6.3
+    defaults:
+      run:
+        # The container's default step shell is sh, which does not support
+        # `set -o pipefail`.
+        shell: bash
     steps:
       - uses: actions/checkout@v7
 
