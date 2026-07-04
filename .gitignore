@@ -1,0 +1,9 @@
+.build/
+.swiftpm/
+.index-build/
+DerivedData/
+Package.resolved
+xcuserdata/
+*.xcodeproj
+.DS_Store
+.claude/

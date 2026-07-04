@@ -1,0 +1,130 @@
+name: Release
+
+# Manually triggered full release: validates the version, runs the test gate
+# (unit, behavior, and live system tests), creates the X.Y.Z tag, and publishes
+# a GitHub Release whose notes are taken from the matching section of
+# CHANGELOG.md.
+#
+# Tagging a semver release is how a Swift package is published: Swift Package
+# Manager resolves versions from git tags, and the Swift Package Index picks up
+# new tags automatically. There is no registry upload step.
+#
+# The CHANGELOG must already contain a "## [X.Y.Z] - <date>" section for the
+# version being released, and Sources/Ipregistry/Version.swift must report the
+# same version.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, e.g. 1.2.0 or v1.2.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test gate
+    runs-on: ubuntu-latest
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run local tests (unit and behavior)
+        run: swift test
+
+      - name: Run system tests (live API)
+        env:
+          IPREGISTRY_API_KEY: ${{ secrets.IPREGISTRY_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${IPREGISTRY_API_KEY:-}" ]; then
+            echo "::error::IPREGISTRY_API_KEY secret is required to run system tests before a release."
+            exit 1
+          fi
+          swift test --filter IpregistrySystemTests
+
+  release:
+    name: Tag and release
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version
+        # The raw input is passed through the environment (never interpolated
+        # into the shell) and strictly validated before any further use.
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version="${VERSION_INPUT#v}"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::Invalid version '$VERSION_INPUT'. Expected semver such as 1.2.0 or v1.2.0."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=$version" >> "$GITHUB_ENV"
+
+      - name: Ensure Version.swift matches
+        run: |
+          set -euo pipefail
+          if ! grep -Fq "public static let version = \"$VERSION\"" Sources/Ipregistry/Version.swift; then
+            echo "::error::Sources/Ipregistry/Version.swift does not declare version $VERSION. Update it before releasing."
+            exit 1
+          fi
+
+      - name: Ensure tag does not already exist
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists locally."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists on the remote."
+            exit 1
+          fi
+
+      - name: Extract changelog section
+        run: |
+          set -euo pipefail
+          awk -v ver="$VERSION" '
+            $0 ~ ("^## \\[" ver "\\]") { capture=1; next }
+            capture && (/^## / || /^\[[^][]+\]:[[:space:]]/) { exit }
+            capture { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::No changelog section found for [$VERSION] in CHANGELOG.md."
+            exit 1
+          fi
+          echo "Release notes for $TAG:"
+          echo "----------------------------------------"
+          cat release-notes.md
+          echo "----------------------------------------"
+
+      - name: Create tag and GitHub release
+        # If an organization rule blocks the default Actions token from
+        # creating tags, provide a RELEASE_TOKEN secret (a PAT owned by a user
+        # allowed to create tags, with Contents: write).
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          prerelease=""
+          case "$VERSION" in
+            *-*) prerelease="--prerelease" ;;
+          esac
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            $prerelease
+          echo "Released $TAG: ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG"
