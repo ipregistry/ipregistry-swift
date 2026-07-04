@@ -34,8 +34,12 @@
         }
 
         /// The typed-address variant of ``lookupBatch(_:options:)``.
+        ///
+        /// The `addresses` label keeps the overload unambiguous with the
+        /// string-based variant (an empty array literal would otherwise match
+        /// both).
         public func lookupBatch(
-            _ addresses: [any IPAddress],
+            addresses: [any IPAddress],
             options: LookupOptions = LookupOptions()
         ) async throws -> [Result<IPInfo, APIError>] {
             try await lookupBatch(addresses.map(Self.string(for:)), options: options)
