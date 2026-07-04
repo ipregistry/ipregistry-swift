@@ -20,7 +20,7 @@ IPREGISTRY_API_KEY=... swift test --filter IpregistrySystemTests              # 
 On Linux without a local toolchain, everything runs in the official container:
 
 ```bash
-docker run --rm -v "$PWD":/src -w /src swift:6.1 swift test
+docker run --rm -v "$PWD":/src -w /src swift:6.3 swift test
 ```
 
 Before opening a pull request, please make sure `swift test` passes and the code is `swift format` clean.
