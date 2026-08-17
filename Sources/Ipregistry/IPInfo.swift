@@ -251,6 +251,9 @@ public struct Connection: Codable, Hashable, Sendable {
     /// The Autonomous System Number, or `nil` when unknown.
     public let asn: Int64?
     public let domain: String?
+    /// Whether the IP address is announced via anycast, i.e. simultaneously
+    /// from multiple locations.
+    public let isAnycast: Bool
     public let organization: String?
     public let route: String?
     public let type: ConnectionType?
@@ -258,15 +261,36 @@ public struct Connection: Codable, Hashable, Sendable {
     public init(
         asn: Int64? = nil,
         domain: String? = nil,
+        isAnycast: Bool = false,
         organization: String? = nil,
         route: String? = nil,
         type: ConnectionType? = nil
     ) {
         self.asn = asn
         self.domain = domain
+        self.isAnycast = isAnycast
         self.organization = organization
         self.route = route
         self.type = type
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case asn
+        case domain
+        case isAnycast = "is_anycast"
+        case organization
+        case route
+        case type
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        asn = try container.decodeIfPresent(Int64.self, forKey: .asn)
+        domain = try container.decodeIfPresent(String.self, forKey: .domain)
+        isAnycast = try container.decodeIfPresent(Bool.self, forKey: .isAnycast) ?? false
+        organization = try container.decodeIfPresent(String.self, forKey: .organization)
+        route = try container.decodeIfPresent(String.self, forKey: .route)
+        type = try container.decodeIfPresent(ConnectionType.self, forKey: .type)
     }
 }
 
