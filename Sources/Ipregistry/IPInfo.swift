@@ -407,6 +407,8 @@ public struct Security: Codable, Hashable, Sendable {
     public let isCloudProvider: Bool
     public let isProxy: Bool
     public let isRelay: Bool
+    /// Whether the IP address is a node of a residential proxy network.
+    public let isResidentialProxy: Bool
     public let isTor: Bool
     public let isTorExit: Bool
     public let isAnonymous: Bool
@@ -420,6 +422,7 @@ public struct Security: Codable, Hashable, Sendable {
         isCloudProvider: Bool = false,
         isProxy: Bool = false,
         isRelay: Bool = false,
+        isResidentialProxy: Bool = false,
         isTor: Bool = false,
         isTorExit: Bool = false,
         isAnonymous: Bool = false,
@@ -432,6 +435,7 @@ public struct Security: Codable, Hashable, Sendable {
         self.isCloudProvider = isCloudProvider
         self.isProxy = isProxy
         self.isRelay = isRelay
+        self.isResidentialProxy = isResidentialProxy
         self.isTor = isTor
         self.isTorExit = isTorExit
         self.isAnonymous = isAnonymous
@@ -446,6 +450,7 @@ public struct Security: Codable, Hashable, Sendable {
         case isCloudProvider = "is_cloud_provider"
         case isProxy = "is_proxy"
         case isRelay = "is_relay"
+        case isResidentialProxy = "is_residential_proxy"
         case isTor = "is_tor"
         case isTorExit = "is_tor_exit"
         case isAnonymous = "is_anonymous"
@@ -461,6 +466,7 @@ public struct Security: Codable, Hashable, Sendable {
         isCloudProvider = try container.decodeIfPresent(Bool.self, forKey: .isCloudProvider) ?? false
         isProxy = try container.decodeIfPresent(Bool.self, forKey: .isProxy) ?? false
         isRelay = try container.decodeIfPresent(Bool.self, forKey: .isRelay) ?? false
+        isResidentialProxy = try container.decodeIfPresent(Bool.self, forKey: .isResidentialProxy) ?? false
         isTor = try container.decodeIfPresent(Bool.self, forKey: .isTor) ?? false
         isTorExit = try container.decodeIfPresent(Bool.self, forKey: .isTorExit) ?? false
         isAnonymous = try container.decodeIfPresent(Bool.self, forKey: .isAnonymous) ?? false

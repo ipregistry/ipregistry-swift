@@ -43,9 +43,18 @@ struct ModelTests {
         #expect(info.location.latitude == nil)
         #expect(info.connection.asn == nil)
         #expect(!info.connection.isAnycast)
+        #expect(!info.security.isResidentialProxy)
         #expect(!info.security.isThreat)
         #expect(info.timeZone.offset == 0)
         #expect(info.currency.format.positive.prefix == nil)
+    }
+
+    @Test func residentialProxyFlagDecodes() throws {
+        let json = #"{"ip": "203.0.113.7", "security": {"is_proxy": true, "is_residential_proxy": true}}"#
+        let info = try JSONDecoder().decode(IPInfo.self, from: Data(json.utf8))
+
+        #expect(info.security.isProxy)
+        #expect(info.security.isResidentialProxy)
     }
 
     @Test func nullNestedObjectsFallBackToDefaults() throws {

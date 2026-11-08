@@ -127,6 +127,7 @@ enum Fixtures {
             "is_cloud_provider": true,
             "is_proxy": false,
             "is_relay": false,
+            "is_residential_proxy": false,
             "is_tor": false,
             "is_tor_exit": false,
             "is_anonymous": false,
