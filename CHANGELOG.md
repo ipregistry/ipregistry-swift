@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New property `Security.isResidentialProxy` (JSON `security.is_residential_proxy`): whether the IP address is a
   node of a residential proxy network.
 
+### Fixed
+
+- No crash on Linux with Swift 6.4 when a client using the default transport is released: default
+  transports now share one process-wide ephemeral `URLSession` (swift-corelibs-foundation crashes when a
+  session that ran requests is deallocated), which also lets clients reuse connections.
+
 ## [1.0.0] - 2026-07-04
 
 ### Added

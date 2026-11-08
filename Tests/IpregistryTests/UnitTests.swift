@@ -3,6 +3,10 @@ import Testing
 
 @testable import Ipregistry
 
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
+
 @Suite("Units")
 struct UnitTests {
     @Test(
@@ -19,6 +23,19 @@ struct UnitTests {
     )
     func isBot(userAgent: String, expected: Bool) {
         #expect(UserAgent.isBot(userAgent) == expected)
+    }
+
+    @Test func defaultTransportsShareOneEphemeralSession() {
+        // A URLSession that ran requests must never be deallocated on Linux
+        // (swift-corelibs-foundation crashes), so default transports share one.
+        let first = URLSessionTransport()
+        let second = URLSessionTransport()
+        #expect(first.session === second.session)
+        #expect(first.session === URLSessionTransport.defaultSession)
+        #expect(first.session.configuration.urlCache == nil)
+
+        let own = URLSession(configuration: .ephemeral)
+        #expect(URLSessionTransport(session: own).session === own)
     }
 
     @Test func errorCodeConstantsMatchRawValues() {

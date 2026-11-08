@@ -95,14 +95,22 @@ public protocol HTTPTransport: Sendable {
 
 /// The default ``HTTPTransport``, backed by a `URLSession`.
 public struct URLSessionTransport: HTTPTransport {
-    private let session: URLSession
+    let session: URLSession
 
-    /// Creates a transport with its own ephemeral `URLSession`, which uses no
-    /// persistent caches, cookies, or credential storage.
-    public init() {
+    /// The ephemeral session every default transport shares. It lives for the
+    /// whole process: swift-corelibs-foundation (Swift 6.4 on Linux) crashes
+    /// when a `URLSession` that has run requests is deallocated without being
+    /// invalidated, so default transports never release theirs.
+    static let defaultSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil
-        self.init(session: URLSession(configuration: configuration))
+        return URLSession(configuration: configuration)
+    }()
+
+    /// Creates a transport on the shared ephemeral `URLSession`, which uses no
+    /// persistent caches, cookies, or credential storage.
+    public init() {
+        self.init(session: Self.defaultSession)
     }
 
     /// Creates a transport backed by the given session, giving full control
