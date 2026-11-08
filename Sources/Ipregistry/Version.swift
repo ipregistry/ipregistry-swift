@@ -16,7 +16,7 @@ extension IpregistryClient {
     /// The released version of the client library. It is reported as part of
     /// the default `User-Agent` header sent with every request to the
     /// Ipregistry API.
-    public static let version = "1.0.0"
+    public static let version = "1.1.0"
 
     /// The default value of the `User-Agent` header sent with requests.
     public static let defaultUserAgent = "IpregistryClient/Swift/\(version)"
