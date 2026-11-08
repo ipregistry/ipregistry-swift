@@ -31,7 +31,7 @@ jobs:
   test:
     name: Test gate
     runs-on: ubuntu-latest
-    container: swift:6.3
+    container: swift:6.4
     defaults:
       run:
         # The container's default step shell is sh, which does not support
